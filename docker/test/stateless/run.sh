@@ -11,7 +11,7 @@ USE_SHARED_CATALOG=${USE_SHARED_CATALOG:=0}
 
 RUN_SEQUENTIAL_TESTS_IN_PARALLEL=1
 
-if [[ "$USE_DATABASE_REPLICATED" -eq 1 ]]; then
+if [[ "$USE_DATABASE_REPLICATED" -eq 1 ]] || [[ "$USE_SHARED_CATALOG" -eq 1 ]]; then
   RUN_SEQUENTIAL_TESTS_IN_PARALLEL=0
 fi
 
@@ -116,20 +116,20 @@ if [[ "$RUN_SEQUENTIAL_TESTS_IN_PARALLEL" -eq 1 ]]; then
       sudo find /etc/clickhouse-server3/ -type f -name '*.xml' -exec sed -i "$1" {} \;
   }
 
-  replace "s|<port>9000</port>|<port>39000</port>|g"
-  replace "s|<port>9440</port>|<port>39440</port>|g"
-  replace "s|<port>9988</port>|<port>39988</port>|g"
-  replace "s|<port>9234</port>|<port>39234</port>|g"
-  replace "s|<port>9181</port>|<port>39181</port>|g"
-  replace "s|<https_port>8443</https_port>|<https_port>38443</https_port>|g"
-  replace "s|<tcp_port>9000</tcp_port>|<tcp_port>39000</tcp_port>|g"
-  replace "s|<tcp_port>9181</tcp_port>|<tcp_port>39181</tcp_port>|g"
-  replace "s|<tcp_port_secure>9440</tcp_port_secure>|<tcp_port_secure>39440</tcp_port_secure>|g"
-  replace "s|<tcp_with_proxy_port>9010</tcp_with_proxy_port>|<tcp_with_proxy_port>39010</tcp_with_proxy_port>|g"
-  replace "s|<mysql_port>9004</mysql_port>|<mysql_port>39004</mysql_port>|g"
-  replace "s|<postgresql_port>9005</postgresql_port>|<postgresql_port>39005</postgresql_port>|g"
-  replace "s|<interserver_http_port>9009</interserver_http_port>|<interserver_http_port>39009</interserver_http_port>|g"
-  replace "s|8123|38123|g"
+  replace "s|<port>9000</port>|<port>19000</port>|g"
+  replace "s|<port>9440</port>|<port>19440</port>|g"
+  replace "s|<port>9988</port>|<port>19988</port>|g"
+  replace "s|<port>9234</port>|<port>19234</port>|g"
+  replace "s|<port>9181</port>|<port>19181</port>|g"
+  replace "s|<https_port>8443</https_port>|<https_port>18443</https_port>|g"
+  replace "s|<tcp_port>9000</tcp_port>|<tcp_port>19000</tcp_port>|g"
+  replace "s|<tcp_port>9181</tcp_port>|<tcp_port>19181</tcp_port>|g"
+  replace "s|<tcp_port_secure>9440</tcp_port_secure>|<tcp_port_secure>19440</tcp_port_secure>|g"
+  replace "s|<tcp_with_proxy_port>9010</tcp_with_proxy_port>|<tcp_with_proxy_port>19010</tcp_with_proxy_port>|g"
+  replace "s|<mysql_port>9004</mysql_port>|<mysql_port>19004</mysql_port>|g"
+  replace "s|<postgresql_port>9005</postgresql_port>|<postgresql_port>19005</postgresql_port>|g"
+  replace "s|<interserver_http_port>9009</interserver_http_port>|<interserver_http_port>19009</interserver_http_port>|g"
+  replace "s|8123|18123|g"
   replace "s|/var/lib/clickhouse/|/var/lib/clickhouse3/|g"
   replace "s|/etc/clickhouse-server/|/etc/clickhouse-server3/|g"
 
@@ -137,13 +137,13 @@ if [[ "$RUN_SEQUENTIAL_TESTS_IN_PARALLEL" -eq 1 ]]; then
   --pid-file /var/run/clickhouse-server3/clickhouse-server.pid \
   -- --path /var/lib/clickhouse3/ --logger.stderr /var/log/clickhouse-server/stderr3.log \
   --logger.log /var/log/clickhouse-server/clickhouse-server3.log --logger.errorlog /var/log/clickhouse-server/clickhouse-server3.err.log \
-  --tcp_port 39000 --tcp_port_secure 39440 --http_port 38123 --https_port 38443 --interserver_http_port 39009 --tcp_with_proxy_port 39010 \
-  --prometheus.port 39988 --keeper_server.raft_configuration.server.port 39234 --keeper_server.tcp_port 39181 \
-  --mysql_port 39004 --postgresql_port 39005
+  --tcp_port 19000 --tcp_port_secure 19440 --http_port 18123 --https_port 18443 --interserver_http_port 19009 --tcp_with_proxy_port 19010 \
+  --prometheus.port 19988 --keeper_server.raft_configuration.server.port 19234 --keeper_server.tcp_port 19181 \
+  --mysql_port 19004 --postgresql_port 19005
 
   for _ in {1..100}
   do
-      clickhouse-client --port 39000 --query "SELECT 1" && break
+      clickhouse-client --port 19000 --query "SELECT 1" && break
       sleep 1
   done
 fi

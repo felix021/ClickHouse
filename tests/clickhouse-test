@@ -2455,9 +2455,9 @@ def do_run_tests(jobs, test_suite: TestSuite):
 
             def override_envs(*args_, **kwargs):
                 global args
-                args.client += " --port 39000"
-                args.http_port = 38123
-                args.https_port = 38443
+                args.client += " --port 19000"
+                args.http_port = 18123
+                args.https_port = 18443
 
                 updated_env = {
                     "CLICKHOUSE_CONFIG": "/etc/clickhouse-server3/config.xml",
@@ -2466,16 +2466,16 @@ def do_run_tests(jobs, test_suite: TestSuite):
                     "CLICKHOUSE_USER_FILES": "/var/lib/clickhouse3/user_files",
                     "CLICKHOUSE_SCHEMA_FILES": "/var/lib/clickhouse3/format_schemas",
                     "CLICKHOUSE_PATH": "/var/lib/clickhouse3",
-                    "CLICKHOUSE_PORT_TCP": "39000",
-                    "CLICKHOUSE_PORT_TCP_SECURE": "39440",
-                    "CLICKHOUSE_PORT_TCP_WITH_PROXY": "39010",
-                    "CLICKHOUSE_PORT_HTTP": "38123",
-                    "CLICKHOUSE_PORT_HTTPS": "38443",
-                    "CLICKHOUSE_PORT_INTERSERVER": "39009",
-                    "CLICKHOUSE_PORT_KEEPER": "39181",
-                    "CLICKHOUSE_PORT_PROMTHEUS_PORT": "39988",
-                    "CLICKHOUSE_PORT_MYSQL": "39004",
-                    "CLICKHOUSE_PORT_POSTGRESQL": "39005",
+                    "CLICKHOUSE_PORT_TCP": "19000",
+                    "CLICKHOUSE_PORT_TCP_SECURE": "19440",
+                    "CLICKHOUSE_PORT_TCP_WITH_PROXY": "19010",
+                    "CLICKHOUSE_PORT_HTTP": "18123",
+                    "CLICKHOUSE_PORT_HTTPS": "18443",
+                    "CLICKHOUSE_PORT_INTERSERVER": "19009",
+                    "CLICKHOUSE_PORT_KEEPER": "19181",
+                    "CLICKHOUSE_PORT_PROMTHEUS_PORT": "19988",
+                    "CLICKHOUSE_PORT_MYSQL": "19004",
+                    "CLICKHOUSE_PORT_POSTGRESQL": "19005",
                 }
                 os.environ.update(updated_env)
 
