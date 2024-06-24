@@ -1241,6 +1241,11 @@ class TestCase:
                 if tag.startswith("use_") and tag not in args.build_flags:
                     return FailureReason.BUILD
 
+        elif ("no-batch" in tags and
+              args.run_by_hash_num is not None and
+              args.run_by_hash_total is not None):
+            return FailureReason.SKIP
+
         return None
 
     def process_result_impl(
