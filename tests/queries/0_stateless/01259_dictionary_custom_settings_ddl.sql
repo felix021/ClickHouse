@@ -1,12 +1,6 @@
 -- Tags: no-fasttest
 
-DROP DATABASE IF EXISTS db_01259;
-
-CREATE DATABASE db_01259;
-
-DROP TABLE IF EXISTS db_01259.table_for_dict;
-
-CREATE TABLE db_01259.table_for_dict
+CREATE TABLE table_for_dict
 (
   key_column UInt64,
   second_column UInt64,
@@ -15,7 +9,7 @@ CREATE TABLE db_01259.table_for_dict
 ENGINE = MergeTree()
 ORDER BY key_column;
 
-INSERT INTO db_01259.table_for_dict VALUES (100500, 10000000, 'Hello world');
+INSERT INTO table_for_dict VALUES (100500, 10000000, 'Hello world');
 
 DROP DATABASE IF EXISTS ordinary_db;
 
@@ -30,7 +24,7 @@ CREATE DICTIONARY ordinary_db.dict1
   third_column String DEFAULT 'qqq'
 )
 PRIMARY KEY key_column
-SOURCE(CLICKHOUSE(HOST 'localhost' PORT tcpPort() USER 'default' TABLE 'table_for_dict' PASSWORD '' DB 'db_01259'))
+SOURCE(CLICKHOUSE(HOST 'localhost' PORT tcpPort() USER 'default' TABLE 'table_for_dict' PASSWORD '' DB currentDatabase()))
 LIFETIME(MIN 1 MAX 10)
 LAYOUT(FLAT()) SETTINGS(max_result_bytes=1);
 
@@ -40,10 +34,6 @@ SELECT dictGetUInt64('ordinary_db.dict1', 'second_column', toUInt64(100500)); --
 
 SELECT 'END';
 
-DROP DICTIONARY IF EXISTS ordinary_db.dict1;
-
 DROP DATABASE IF EXISTS ordinary_db;
 
-DROP TABLE IF EXISTS db_01259.table_for_dict;
-
-DROP DATABASE IF EXISTS db_01259;
+DROP TABLE IF EXISTS table_for_dict;

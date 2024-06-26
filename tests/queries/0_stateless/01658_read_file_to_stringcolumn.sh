@@ -7,9 +7,6 @@ CURDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 # shellcheck source=../shell_config.sh
 . "$CURDIR"/../shell_config.sh
 
-# Data preparation.
-
-mkdir -p ${USER_FILES_PATH}/
 echo -n aaaaaaaaa > ${USER_FILES_PATH}/a.txt
 echo -n bbbbbbbbb > ${USER_FILES_PATH}/b.txt
 echo -n ccccccccc > ${USER_FILES_PATH}/c.txt

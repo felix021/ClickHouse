@@ -734,7 +734,9 @@ def get_localzone():
 
 class SettingsRandomizer:
     settings = {
-        "max_insert_threads": lambda: random.randint(1, 3),
+        "max_insert_threads": lambda: 32
+        if random.random() < 0.03
+        else random.randint(1, 3),
         "group_by_two_level_threshold": threshold_generator(0.2, 0.2, 1, 1000000),
         "group_by_two_level_threshold_bytes": threshold_generator(
             0.2, 0.2, 1, 50000000
@@ -750,7 +752,7 @@ class SettingsRandomizer:
         "prefer_localhost_replica": lambda: random.randint(0, 1),
         "max_block_size": lambda: random.randint(8000, 100000),
         "max_joined_block_size_rows": lambda: random.randint(8000, 100000),
-        "max_threads": lambda: random.randint(1, 3),
+        "max_threads": lambda: 64 if random.random() < 0.03 else random.randint(1, 3),
         "optimize_append_index": lambda: random.randint(0, 1),
         "optimize_if_chain_to_multiif": lambda: random.randint(0, 1),
         "optimize_if_transform_strings_to_enum": lambda: random.randint(0, 1),
@@ -1620,44 +1622,43 @@ class TestCase:
         # Normalize hostname in stdout file.
         replace_in_file(self.stdout_file, socket.gethostname(), "localhost")
 
-        if args.run_sequential_tests_in_parallel:
-            if os.environ.get("CLICKHOUSE_PORT_TCP"):
-                replace_in_file(
-                    self.stdout_file,
-                    f"PORT {os.environ['CLICKHOUSE_PORT_TCP']}",
-                    "PORT 9000",
-                )
-                replace_in_file(
-                    self.stdout_file,
-                    f"localhost	{os.environ['CLICKHOUSE_PORT_TCP']}",
-                    "localhost	9000",
-                )
+        if os.environ.get("CLICKHOUSE_PORT_TCP"):
+            replace_in_file(
+                self.stdout_file,
+                f"PORT {os.environ['CLICKHOUSE_PORT_TCP']}",
+                "PORT 9000",
+            )
+            replace_in_file(
+                self.stdout_file,
+                f"localhost	{os.environ['CLICKHOUSE_PORT_TCP']}",
+                "localhost	9000",
+            )
 
-            if os.environ.get("CLICKHOUSE_PORT_TCP_SECURE"):
-                replace_in_file(
-                    self.stdout_file,
-                    f"PORT {os.environ['CLICKHOUSE_PORT_TCP_SECURE']}",
-                    "PORT 9440",
-                )
-                replace_in_file(
-                    self.stdout_file,
-                    f"localhost	{os.environ['CLICKHOUSE_PORT_TCP_SECURE']}",
-                    "localhost	9440",
-                )
+        if os.environ.get("CLICKHOUSE_PORT_TCP_SECURE"):
+            replace_in_file(
+                self.stdout_file,
+                f"PORT {os.environ['CLICKHOUSE_PORT_TCP_SECURE']}",
+                "PORT 9440",
+            )
+            replace_in_file(
+                self.stdout_file,
+                f"localhost	{os.environ['CLICKHOUSE_PORT_TCP_SECURE']}",
+                "localhost	9440",
+            )
 
-            if os.environ.get("CLICKHOUSE_PATH"):
-                replace_in_file(
-                    self.stdout_file,
-                    os.environ["CLICKHOUSE_PATH"],
-                    "/var/lib/clickhouse",
-                )
+        if os.environ.get("CLICKHOUSE_PATH"):
+            replace_in_file(
+                self.stdout_file,
+                os.environ["CLICKHOUSE_PATH"],
+                "/var/lib/clickhouse",
+            )
 
-            if os.environ.get("CLICKHOUSE_PORT_HTTPS"):
-                replace_in_file(
-                    self.stdout_file,
-                    f"https://localhost:{os.environ['CLICKHOUSE_PORT_HTTPS']}/",
-                    "https://localhost:8443/",
-                )
+        if os.environ.get("CLICKHOUSE_PORT_HTTPS"):
+            replace_in_file(
+                self.stdout_file,
+                f"https://localhost:{os.environ['CLICKHOUSE_PORT_HTTPS']}/",
+                "https://localhost:8443/",
+            )
 
         stdout = ""
         if os.path.exists(self.stdout_file):
