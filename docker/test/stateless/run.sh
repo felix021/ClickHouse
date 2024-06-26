@@ -287,7 +287,7 @@ function run_tests()
     else
         # All other configurations are OK.
         ADDITIONAL_OPTIONS+=('--jobs')
-        ADDITIONAL_OPTIONS+=('4')
+        ADDITIONAL_OPTIONS+=('5')
     fi
 
     if [[ "$RUN_SEQUENTIAL_TESTS_IN_PARALLEL" -eq 1 ]]; then
