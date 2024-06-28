@@ -43,7 +43,6 @@ def get_run_command(
         f"--volume={result_path}:/test_output "
         f"--volume={server_log_path}:/var/log/clickhouse-server "
         "--security-opt seccomp=unconfined "  # required to issue io_uring sys-calls
-        "--ulimit nofile=1048576:1048576 "
         f"--cap-add=SYS_PTRACE {env_str} {image}"
     )
 
