@@ -6,8 +6,8 @@ concurrency:
 'on':
   workflow_dispatch:
     inputs:
-      sha:
-        description: 'The SHA hash of the commit from which to create the release'
+      ref:
+        description: 'Git reference (branch or commit sha) from which to create the release'
         required: true
         type: string
       type:
@@ -19,11 +19,13 @@ concurrency:
           - patch
 
 jobs:
-  PushTagAndCreateGhRelease:
+  CreateRelease:
     outputs:
       GITHUB_TAG: ${{ steps.TagAndRelease.outputs.GITHUB_TAG }}
     runs-on: [self-hosted, style-checker-aarch64]
     steps:
+      - name: DebugInfo
+        uses: hmarr/debug-action@f7318c783045ac39ed9bb497e22ce835fdafbfe6
       - name: Set envs
         # https://docs.github.com/en/actions/learn-github-actions/workflow-commands-for-github-actions#multiline-strings
         run: |
@@ -43,8 +45,8 @@ jobs:
           GH_TOKEN: ${{ secrets.ROBOT_CLICKHOUSE_COMMIT_TOKEN }}
         run: |
           cd ./tests/ci
-          python3 ./create_release.py --ref ${{ inputs.sha }} --type ${{ inputs.type }} --dry-run
-          GITHUB_TAG=$(cat ./tag.tmp)
+          python3 ./create_release.py --ref ${{ inputs.ref }} --type ${{ inputs.type }} --dry-run
+          GITHUB_TAG="$(cat ./tag.tmp)"
           echo "GITHUB_TAG=$GITHUB_TAG" >> "$GITHUB_ENV"
           echo "GITHUB_TAG=$GITHUB_TAG" >> "$GITHUB_OUTPUT"
           echo "New release tag: $GITHUB_TAG"
@@ -57,11 +59,18 @@ jobs:
                 [ -n "$GITHUB_TAG" ] && echo "ERROR: Release tag must not be set in env for new release" && exit 1
             fi
             echo "Alles goed - continue"
-      - name: Docker version, Changelog, Security
-        if: $ {{ inputs.type == 'patch' }}
+      - name: Switch to master
+        if: ${{ inputs.type == 'patch' }}
         run: |
           echo "Git status:"
           git status
+          echo "Switch to master:"
+          git checkout master
+      - name: Docker version, Changelog, Security
+        if: ${{ inputs.type == 'patch' }}
+        env:
+          GH_TOKEN: ${{ secrets.ROBOT_CLICKHOUSE_COMMIT_TOKEN }}
+        run: | 
           echo "List versions"
           ./utils/list-versions/list-versions.sh > ./utils/list-versions/version_date.tsv
           echo "Update docker version"
@@ -69,27 +78,52 @@ jobs:
           echo "Generate ChangeLog"
           GID=$(id -g "${UID}")
           export CI=1
-          python3 ./tests/ci/changelog.py -v --debug-helpers \
-                  --gh-user-or-token="$GH_TOKEN" --jobs=5 \
-                  --output="docs/changelogs/${GITHUB_TAG}.md" "${GITHUB_TAG}"
+          docker run -u "${UID}:${GID}" -e PYTHONUNBUFFERED=1 -e CI=1 --network=host \
+            --volume=".:/ClickHouse" clickhouse/style-test \
+            /ClickHouse/tests/ci/changelog.py -v --debug-helpers \
+            --gh-user-or-token="$GH_TOKEN" --jobs=5 \
+            --output="/ClickHouse/docs/changelogs/${GITHUB_TAG}.md" "${GITHUB_TAG}"
           # git add "./docs/changelogs/${GITHUB_TAG}.md"
           echo "Generate Security"
           python3 ./utils/security-generator/generate_security.py > SECURITY.md
           git diff HEAD
-#      - name: Create Pull Request
-#        uses: peter-evans/create-pull-request@v6
-#        with:
-#          author: "robot-clickhouse <robot-clickhouse@users.noreply.github.com>"
-#          token: ${{ secrets.ROBOT_CLICKHOUSE_COMMIT_TOKEN }}
-#          committer: "robot-clickhouse <robot-clickhouse@users.noreply.github.com>"
-#          commit-message: Update version_date.tsv and changelogs after ${{ env.GITHUB_TAG }}
-#          branch: auto/${{ env.GITHUB_TAG }}
-#          assignees: ${{ github.event.sender.login }}  # assign the PR to the tag pusher
-#          delete-branch: true
-#          title: Update version_date.tsv and changelogs after ${{ env.GITHUB_TAG }}
-#          labels: do not test
-#          body: |
-#            Update version_date.tsv and changelogs after ${{ env.GITHUB_TAG }}
-#
-#            ### Changelog category (leave one):
-#            - Not for changelog (changelog entry is not required)
+      - name: Create Pull Request
+        if: ${{ inputs.type == 'patch' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          author: "robot-clickhouse <robot-clickhouse@users.noreply.github.com>"
+          token: ${{ secrets.ROBOT_CLICKHOUSE_COMMIT_TOKEN }}
+          committer: "robot-clickhouse <robot-clickhouse@users.noreply.github.com>"
+          commit-message: Update version_date.tsv and changelogs after ${{ env.GITHUB_TAG }}
+          branch: auto/${{ env.GITHUB_TAG }}
+          assignees: ${{ github.event.sender.login }}  # assign the PR to the tag pusher
+          delete-branch: true
+          title: Update version_date.tsv and changelogs after ${{ env.GITHUB_TAG }}
+          labels: do not test
+          body: |
+            Update version_date.tsv and changelogs after ${{ env.GITHUB_TAG }}
+            ### Changelog category (leave one):
+            - Not for changelog (changelog entry is not required)
+      - name: Docker clickhouse/clickhouse-server building
+        run: |
+          # TODO --no-push to --push
+          git checkout "$GITHUB_TAG"
+          cd "./tests/ci"
+          export CHECK_NAME="Docker server image"
+          python3 docker_server.py --release-type auto --version "$GITHUB_TAG" --check-name "$CHECK_NAME"
+          git checkout -
+      - name: Docker clickhouse/clickhouse-keeper building
+        run: |
+          # TODO --no-push to --push
+          git checkout "$GITHUB_TAG"
+          cd "./tests/ci"
+          export CHECK_NAME="Docker keeper image"
+          python3 docker_server.py --release-type auto --version "$GITHUB_TAG" --check-name "$CHECK_NAME"
+          git checkout -
+#     Artifactory
+#      - name: Deploy packages and assets
+#        run: |
+#          curl --silent --data '' --no-buffer \
+#            '${{ secrets.PACKAGES_RELEASE_URL }}/release/'"${GITHUB_TAG}"'?binary=binary_darwin&binary=binary_darwin_aarch64&sync=true'
+
+
